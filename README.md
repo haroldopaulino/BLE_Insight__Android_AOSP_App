@@ -1,72 +1,41 @@
 # BLE Insight
 
-**Developer:** Harold Paulino
+BLE Insight is a modern Android application for discovering and inspecting nearby Bluetooth Low Energy devices.
 
-BLE Insight is a professional-grade Android application designed for high-performance Bluetooth Low Energy (BLE) discovery. Built with a focus on clean architecture and reactive programming, it provides a real-time, Material 3 interface for scanning and analyzing nearby BLE devices.
+## Features
 
-<img width="1536" height="1024" alt="ble_insight1" src="https://github.com/user-attachments/assets/934317b5-363c-4156-8f54-8f0bb768bda8" />
+- Real-time BLE scanning
+- Signal strength and RSSI sorting
+- Device name, address, type, bond state, PHY and connection details
+- Service UUID inspection
+- Manufacturer and service data inspection
+- Dedicated advertisement flags screen
+- Dark Material 3 interface
+- Runtime Bluetooth, nearby-device and location permission handling
+- Bluetooth enable request before scanning
 
-## 🚀 Key Features
+## Architecture
 
-*   **Real-time BLE Scanning:** Continuous discovery of Bluetooth Low Energy advertisements with live RSSI updates.
-*   **Intelligent Device Management:** Automatic "upserting" and sorting of discovered devices based on signal strength (RSSI) to ensure the most relevant devices remain at the top.
-*   **Modern UI Architecture:** 
-    *   **Fixed Control Header:** Scan controls and real-time statistics (device count, strongest RSSI) remain anchored at the top for immediate access.
-    *   **Independent List Scrolling:** Only the device list scrolls, providing a superior UX compared to standard full-page scrolling.
-*   **Advanced Permission Handling:** Robust support for Android 12+ (API 31) granular Bluetooth permissions and legacy location requirements.
-*   **Error Resiliency:** Specialized handling for Bluetooth availability, system-level scan failures, and security exceptions.
+The project separates Bluetooth access, repository logic, domain models and Compose presentation code.
 
-## 🛠 Technical Stack
+- `data/ble`: Android Core Bluetooth scanning
+- `data/repository`: Repository implementation
+- `domain/model`: BLE device models
+- `domain/repository`: Repository contracts
+- `presentation/scanner`: Scanner, device details and advertisement flags screens
+- `ui/theme`: Dark Material 3 theme
 
-*   **Language:** Kotlin
-*   **UI Framework:** Jetpack Compose (Material 3)
-*   **Architecture:** Clean Architecture + MVVM (Model-View-ViewModel)
-*   **Reactive Streams:** Kotlin Coroutines & Flow (including `callbackFlow` for legacy API bridging)
-*   **Build System:** Gradle (Kotlin DSL) with Android Gradle Plugin 9.2.0
-*   **Testing:** 
-    *   **JUnit 4** for unit testing.
-    *   **Turbine** for reactive stream (Flow) verification.
-    *   **Kotlinx-Coroutines-Test** for deterministic asynchronous testing.
+## Requirements
 
-## 🏗 Project Structure
+- Android Studio with AGP 9.2 support
+- JDK 21
+- Android SDK 36
+- Android 8.0 or newer
 
-The project follows Clean Architecture principles, ensuring a strict separation of concerns:
+## Privacy
 
-```text
-app/src/main/java/com/harold/ble_insight
-├── data            # Framework implementations & API bridging
-│   ├── ble         # Android Bluetooth LE implementation (Scanner)
-│   └── repository  # Repository implementations (Data mapping)
-├── domain          # Pure business logic (Usecases, Models, Interfaces)
-│   ├── model       # Domain entities
-│   └── repository  # Repository interfaces (Abstraction)
-├── presentation    # UI & State management
-│   └── scanner     # Scanner Screen, ViewModel, and UI State
-├── ui/theme        # Material 3 Design System implementation
-├── BlePermissionProvider.kt  # Permission logic
-└── MainActivity.kt           # Entry point & Activity-scoped logic
-```
+BLE Insight processes scan results locally. It does not upload or share scanned device information.
 
-## 🧪 Quality Assurance
+## Owner
 
-Extensive unit test coverage ensures the reliability of the core logic:
-
-*   **ViewModel Tests:** Verifies state transitions, permission results, device sorting logic, and error state propagation.
-*   **Repository Tests:** Ensures correct delegation between the domain interfaces and the hardware-specific scanner implementation.
-*   **Flow Verification:** Uses Turbine to validate reactive device streams and lifecycle events.
-
-## ⚙️ Build Requirements
-
-*   **Android Studio Panda 4** or newer
-*   **Android SDK Platform 36**
-*   **Android Gradle Plugin 9.2.0**
-*   **JDK 21**
-*   **Minimum SDK:** API 26 (Android 8.0)
-
-## 📖 How to Run
-
-1.  Open the project in **Android Studio Panda 4** or newer.
-2.  Sync Gradle dependencies.
-3.  Connect an Android device with BLE support.
-4.  Run the `:app` module.
-5.  Grant requested Bluetooth and Location permissions to begin scanning.
+by Harold Paulino

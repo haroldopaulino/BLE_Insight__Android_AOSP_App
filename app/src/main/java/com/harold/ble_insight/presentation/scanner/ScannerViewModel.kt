@@ -25,9 +25,46 @@ class ScannerViewModel(
     fun onPermissionResult(isGranted: Boolean) {
         state = state.copy(
             hasPermission = isGranted,
-            message = if (isGranted) null else "Bluetooth and location permissions are required to scan."
+            message = if (isGranted) null else "Bluetooth permission is required to scan."
         )
     }
+
+    fun startScan() {
+        if (state.isScanning) return
+
+        state = state.copy(
+            isScanning = true,
+            devices = emptyList(),
+            message = null
+        )
+
+        scanJob?.cancel()
+        scanJob = viewModelScope.launch {
+            try {
+                repository.scanDevices(scanPeriodMillis).collect { device ->
+                    state = state.copy(
+                        devices = state.devices.upsert(device)
+                    )
+                }
+                state = state.copy(isScanning = false)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: SecurityException) {
+                repository.stopScan()
+                state = state.copy(
+                    isScanning = false,
+                    message = "BLE scan was blocked by Android permissions. Check Nearby Devices and Bluetooth permissions."
+                )
+            } catch (exception: Throwable) {
+                repository.stopScan()
+                state = state.copy(
+                    isScanning = false,
+                    message = exception.message ?: "Unable to start BLE scan."
+                )
+            }
+        }
+    }
+
 
     fun onBluetoothUnavailable() {
         state = state.copy(
@@ -46,52 +83,8 @@ class ScannerViewModel(
     fun onBluetoothEnableRequestFailed() {
         state = state.copy(
             isScanning = false,
-            message = "Unable to open the Bluetooth enable prompt."
+            message = "Unable to request Bluetooth enable. Turn on Bluetooth manually and try again."
         )
-    }
-
-    fun startScan() {
-        if (state.isScanning) return
-
-        state = state.copy(
-            isScanning = true,
-            devices = emptyList(),
-            message = "Scanning for nearby BLE devices..."
-        )
-
-        scanJob?.cancel()
-        scanJob = viewModelScope.launch {
-            try {
-                repository.scanDevices(scanPeriodMillis).collect { device ->
-                    state = state.copy(
-                        devices = state.devices.upsert(device),
-                        message = null
-                    )
-                }
-                state = state.copy(
-                    isScanning = false,
-                    message = if (state.devices.isEmpty()) {
-                        "No BLE devices found. Make sure location is enabled, Bluetooth is enabled, and nearby devices are advertising."
-                    } else {
-                        null
-                    }
-                )
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (exception: SecurityException) {
-                repository.stopScan()
-                state = state.copy(
-                    isScanning = false,
-                    message = "BLE scan was blocked by Android permissions. Check Nearby Devices and Location permissions."
-                )
-            } catch (exception: Throwable) {
-                repository.stopScan()
-                state = state.copy(
-                    isScanning = false,
-                    message = exception.message ?: "Unable to start BLE scan."
-                )
-            }
-        }
     }
 
     fun stopScan() {

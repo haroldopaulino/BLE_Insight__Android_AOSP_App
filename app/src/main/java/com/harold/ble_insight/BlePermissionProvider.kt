@@ -16,9 +16,7 @@ object BlePermissionProvider {
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         } else {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 

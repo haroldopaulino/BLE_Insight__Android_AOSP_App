@@ -1,6 +1,5 @@
 package com.harold.ble_insight
 
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
@@ -25,8 +24,8 @@ class MainActivity : ComponentActivity() {
         BlePermissionProvider.requiredPermissions()
     }
 
-    private val bluetoothManager by lazy {
-        getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothAdapter: BluetoothAdapter? by lazy {
+        (getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
     }
 
     private val scannerViewModel: ScannerViewModel by viewModels {
@@ -37,10 +36,19 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private var pendingScanRequest = false
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
-        scannerViewModel.onPermissionResult(grants.values.all { it })
+        val granted = grants.values.all { it }
+        scannerViewModel.onPermissionResult(granted)
+        if (granted && pendingScanRequest) {
+            pendingScanRequest = false
+            startScanOrRequestBluetooth()
+        } else if (!granted) {
+            pendingScanRequest = false
+        }
     }
 
     private val enableBluetoothLauncher = registerForActivityResult(
@@ -63,7 +71,14 @@ class MainActivity : ComponentActivity() {
                 }
                 ScannerScreen(
                     state = scannerViewModel.state,
-                    onStartScan = ::startScanWithRequirements,
+                    onStartScan = {
+                        if (BlePermissionProvider.hasPermissions(this, permissions)) {
+                            startScanOrRequestBluetooth()
+                        } else {
+                            pendingScanRequest = true
+                            permissionLauncher.launch(permissions)
+                        }
+                    },
                     onStopScan = scannerViewModel::stopScan
                 )
             }
@@ -75,35 +90,25 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
-    private fun startScanWithRequirements() {
-        if (!BlePermissionProvider.hasPermissions(this, permissions)) {
-            permissionLauncher.launch(permissions)
-            return
-        }
-
-        if (!hasBluetoothAdapter()) {
+    private fun startScanOrRequestBluetooth() {
+        val adapter = bluetoothAdapter
+        if (adapter == null) {
             scannerViewModel.onBluetoothUnavailable()
             return
         }
 
-        if (!isBluetoothEnabled()) {
-            requestEnableBluetooth()
-            return
+        if (isBluetoothEnabled()) {
+            scannerViewModel.startScan()
+        } else {
+            runCatching {
+                enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            }.onFailure {
+                scannerViewModel.onBluetoothEnableRequestFailed()
+            }
         }
-
-        scannerViewModel.startScan()
-    }
-
-    private fun hasBluetoothAdapter(): Boolean {
-        return bluetoothManager.adapter != null
     }
 
     private fun isBluetoothEnabled(): Boolean {
-        return bluetoothManager.adapter?.isEnabled == true
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun requestEnableBluetooth() {
-        enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        return runCatching { bluetoothAdapter?.isEnabled == true }.getOrDefault(false)
     }
 }
