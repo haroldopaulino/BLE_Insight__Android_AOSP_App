@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "BLE Insight"
-include(":app")
+include(":phone", ":wearable")

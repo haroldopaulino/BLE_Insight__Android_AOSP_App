@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">BLE Insight</string>
+    <string name="bluetooth_classic">Bluetooth Classic</string>
+    <string name="ble">BLE</string>
+    <string name="scan">SCAN</string>
+    <string name="listing_x_devices">Listing x devices</string>
+    <string name="name">Name: </string>
+    <string name="mac">"Mac: "</string>
+    <string name="type">Type:</string>
+    <string name="bond_state">"Bond State: "</string>
+    <string name="rssi">RSSI: </string>
+    <string name="alias">Alias: </string>
+</resources>
